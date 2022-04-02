@@ -1,0 +1,990 @@
+[
+    {
+        "id": "75c5343d1031cd5b",
+        "type": "subflow",
+        "name": "ICBF Oauth2",
+        "info": "",
+        "category": "ICBF",
+        "in": [
+            {
+                "x": 200,
+                "y": 80,
+                "wires": [
+                    {
+                        "id": "4779e3fadc6a530c"
+                    }
+                ]
+            }
+        ],
+        "out": [
+            {
+                "x": 1140,
+                "y": 160,
+                "wires": [
+                    {
+                        "id": "fdd42383f3e529a5",
+                        "port": 0
+                    }
+                ]
+            }
+        ],
+        "env": [],
+        "meta": {},
+        "color": "#3FADB5",
+        "icon": "node-red-contrib-oauth2/oauth2.svg"
+    },
+    {
+        "id": "59ff2a1.fa600d4",
+        "type": "http in",
+        "z": "75c5343d1031cd5b",
+        "name": "ICBF Call Back URI",
+        "url": "/icbf/auth/callback",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 190,
+        "y": 160,
+        "wires": [
+            [
+                "24601d6861d73b4e",
+                "54c1e70d.ab3e18"
+            ]
+        ]
+    },
+    {
+        "id": "54c1e70d.ab3e18",
+        "type": "template",
+        "z": "75c5343d1031cd5b",
+        "name": "page",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "handlebars",
+        "syntax": "mustache",
+        "template": "<html>\n    <head></head>\n    <body>\n        <h1>Login complete return to application</h1>\n    </body>\n</html>",
+        "x": 390,
+        "y": 220,
+        "wires": [
+            [
+                "266c286f.d993d8"
+            ]
+        ]
+    },
+    {
+        "id": "266c286f.d993d8",
+        "type": "http response",
+        "z": "75c5343d1031cd5b",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 530,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "fdd42383f3e529a5",
+        "type": "function",
+        "z": "75c5343d1031cd5b",
+        "name": "Save OAuth Tokens",
+        "func": "if (msg.payload.access_token) {\n    var ICBFtoken = msg.payload.access_token;\n    var ICBFrefresh = msg.payload.refresh_token;\n    global.set('ICBFtoken', ICBFtoken);\n    global.set('ICBFrefresh', ICBFrefresh);\n    Time = new Date()\n    msg.payload = \"ICBF Access Granted \" + Time;\n    \n} else {\n    msg.payload = \"ICBF Authorization error.\";\n}\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 970,
+        "y": 160,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "b5d2caf738cccf03",
+        "type": "function",
+        "z": "75c5343d1031cd5b",
+        "name": "Refresh Token",
+        "func": "var ICBFrefresh = global.get('ICBFrefresh');\n\nmsg.payload ={\n            \"grant_type\": \"refresh_token\",\n            \"client_id\": msg.client,\n            \"client_secret\": msg.secret,\n            \"refresh_token\": ICBFrefresh\n        }\n\nmsg.headers = {};\nmsg.headers['Accept'] = \"application/json\";\nmsg.headers['content-type'] = 'application/json';\nmsg.headers['Cache-Control'] = 'no-cache';\n\nmsg.method = \"POST\";\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 540,
+        "y": 80,
+        "wires": [
+            [
+                "9a87b218468119ca"
+            ]
+        ]
+    },
+    {
+        "id": "9a87b218468119ca",
+        "type": "http request",
+        "z": "75c5343d1031cd5b",
+        "name": "",
+        "method": "use",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "https://api.dev-icbf.com/oauth",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "authType": "",
+        "senderr": false,
+        "x": 770,
+        "y": 160,
+        "wires": [
+            [
+                "fdd42383f3e529a5"
+            ]
+        ]
+    },
+    {
+        "id": "0775cce45e0f89be",
+        "type": "function",
+        "z": "75c5343d1031cd5b",
+        "name": "ICBF Oauth2",
+        "func": "msg.payload ={\n            \"grant_type\": \"authorization_code\",\n            \"client_id\": msg.client,\n            \"client_secret\": msg.secret,\n            \"code\": msg.payload.code,\n            \"redirect_uri\": msg.redirect\n        }\n\nmsg.headers = {};\nmsg.headers['Accept'] = \"application/json\";\nmsg.headers['content-type'] = 'application/json';\nmsg.headers['Cache-Control'] = 'no-cache';\n\nmsg.method = \"POST\";\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 590,
+        "y": 160,
+        "wires": [
+            [
+                "9a87b218468119ca"
+            ]
+        ]
+    },
+    {
+        "id": "24601d6861d73b4e",
+        "type": "credentials",
+        "z": "75c5343d1031cd5b",
+        "name": "",
+        "props": [
+            {
+                "value": "client",
+                "type": "msg"
+            },
+            {
+                "value": "secret",
+                "type": "msg"
+            },
+            {
+                "value": "redirect",
+                "type": "msg"
+            }
+        ],
+        "x": 410,
+        "y": 160,
+        "wires": [
+            [
+                "0775cce45e0f89be"
+            ]
+        ]
+    },
+    {
+        "id": "4779e3fadc6a530c",
+        "type": "credentials",
+        "z": "75c5343d1031cd5b",
+        "name": "",
+        "props": [
+            {
+                "value": "client",
+                "type": "msg"
+            },
+            {
+                "value": "secret",
+                "type": "msg"
+            }
+        ],
+        "x": 350,
+        "y": 80,
+        "wires": [
+            [
+                "b5d2caf738cccf03"
+            ]
+        ]
+    },
+    {
+        "id": "8ff951c3bb024806",
+        "type": "subflow",
+        "name": "ICBF Get",
+        "info": "",
+        "category": "ICBF",
+        "in": [
+            {
+                "x": 20,
+                "y": 80,
+                "wires": [
+                    {
+                        "id": "499dd5c3963ddc67"
+                    }
+                ]
+            }
+        ],
+        "out": [
+            {
+                "x": 540,
+                "y": 80,
+                "wires": [
+                    {
+                        "id": "2a81af84c8dc8cb6",
+                        "port": 0
+                    }
+                ]
+            }
+        ],
+        "env": [],
+        "meta": {},
+        "color": "#3FADB5",
+        "icon": "node-red/white-globe.svg"
+    },
+    {
+        "id": "499dd5c3963ddc67",
+        "type": "function",
+        "z": "8ff951c3bb024806",
+        "name": "GET Herd Details",
+        "func": "var ICBFtoken = global.get('ICBFtoken');\nmsg.headers = {};\nmsg.headers['Authorization'] = \"Bearer \"+ICBFtoken;\nmsg.headers['Accept'] = \"application/json\";\nmsg.headers['Cache-Control'] = 'no-cache';\n\nmsg.url = \"https://api.dev-icbf.com/v2/herd-details/animal-details\";\nmsg.method = \"GET\";\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 190,
+        "y": 80,
+        "wires": [
+            [
+                "2a81af84c8dc8cb6"
+            ]
+        ]
+    },
+    {
+        "id": "2a81af84c8dc8cb6",
+        "type": "http request",
+        "z": "8ff951c3bb024806",
+        "name": "",
+        "method": "use",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "authType": "",
+        "senderr": false,
+        "x": 390,
+        "y": 80,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "1715b1bd5189a439",
+        "type": "tab",
+        "label": "Herd Sync",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "31e22b30d4273dc0",
+        "type": "function",
+        "z": "1715b1bd5189a439",
+        "name": "Get ICBF Herd",
+        "func": "flow.set(\"ICBF_Herd\",msg.payload._embedded.animal_details)\nmsg.ICBF = msg.payload._embedded.animal_details\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 440,
+        "y": 260,
+        "wires": [
+            [
+                "28039599e717d818"
+            ]
+        ]
+    },
+    {
+        "id": "28039599e717d818",
+        "type": "sf:949541c9b70110d5",
+        "z": "1715b1bd5189a439",
+        "name": "GET Asset/Animal",
+        "API": "asset/animal",
+        "Method": "GET",
+        "x": 650,
+        "y": 260,
+        "wires": [
+            [
+                "3deb53d24dc0abea"
+            ]
+        ]
+    },
+    {
+        "id": "3deb53d24dc0abea",
+        "type": "function",
+        "z": "1715b1bd5189a439",
+        "name": "Get farmOS Herd",
+        "func": "flow.set(\"farmOS_Herd\",msg.payload.data);\nmsg.farmOS = msg.payload.data;\nreturn msg;\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 870,
+        "y": 260,
+        "wires": [
+            [
+                "340c0866760ddf3e"
+            ]
+        ]
+    },
+    {
+        "id": "44931b74312ac4a0",
+        "type": "subflow:8ff951c3bb024806",
+        "z": "1715b1bd5189a439",
+        "name": "",
+        "x": 260,
+        "y": 260,
+        "wires": [
+            [
+                "31e22b30d4273dc0"
+            ]
+        ]
+    },
+    {
+        "id": "3d2199de393c3811",
+        "type": "inject",
+        "z": "1715b1bd5189a439",
+        "name": "Check for Changes",
+        "props": [],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": "10",
+        "topic": "",
+        "x": 250,
+        "y": 40,
+        "wires": [
+            [
+                "5a0c251368582f28"
+            ]
+        ]
+    },
+    {
+        "id": "5a0c251368582f28",
+        "type": "credentials",
+        "z": "1715b1bd5189a439",
+        "name": "farmOS Credentials",
+        "props": [
+            {
+                "value": "payload.url",
+                "type": "msg"
+            },
+            {
+                "value": "payload.username",
+                "type": "msg"
+            },
+            {
+                "value": "payload.password",
+                "type": "msg"
+            },
+            {
+                "value": "payload.client_id",
+                "type": "msg"
+            },
+            {
+                "value": "client_secret",
+                "type": "msg"
+            },
+            {
+                "value": "payload.scope",
+                "type": "msg"
+            }
+        ],
+        "x": 470,
+        "y": 100,
+        "wires": [
+            [
+                "97c640be2a6262e2"
+            ]
+        ]
+    },
+    {
+        "id": "97c640be2a6262e2",
+        "type": "sf:895a366cbeeeb85e",
+        "z": "1715b1bd5189a439",
+        "name": "",
+        "x": 680,
+        "y": 100,
+        "wires": [
+            [
+                "a2c8055fb4afcf1f"
+            ]
+        ]
+    },
+    {
+        "id": "0bcd783b8e13111f",
+        "type": "subflow:75c5343d1031cd5b",
+        "z": "1715b1bd5189a439",
+        "name": "",
+        "x": 690,
+        "y": 180,
+        "wires": [
+            [
+                "8d4f1ce26da60928"
+            ]
+        ]
+    },
+    {
+        "id": "340c0866760ddf3e",
+        "type": "function",
+        "z": "1715b1bd5189a439",
+        "name": "Check for herd changes",
+        "func": "let farmOS_import = [];\nlet farmOS_archive = [];\nlet farmOS_changes = [];\n\nvar icbf = flow.get(\"ICBF_Herd\");\nvar farmOS = flow.get(\"farmOS_Herd\");\nvar already_exists,left_herd, status;\n\nif (farmOS != null && icbf != null){\n//check for animals in ICBF but not farmOS\nicbf.forEach(data => {\n       already_exists = 0;\n\n farmOS.forEach(dat => {\n      dat.attributes.id_tag.forEach(dat2 => {\n          \n    \n    if (dat2.id == data.animal_id) {\n       already_exists = 1;\n    }\n \n   })\n }) \n   \n    if (already_exists != 1){\n        farmOS_import.push(data);\n}\n}) \n//end check for animals in ICBF but not farmOS\n\n//check for animals in farmOS but not ICBF\nfarmOS.forEach(data3 => {\n       left_herd = 0;\n       data3.attributes.id_tag.forEach(data4 => {\n            status = data3.attributes.status;\n          \n icbf.forEach(dat3 => {\n\n    if (dat3.animal_id == data4.id) {\n       left_herd = 1;\n    }\n   }) \n \n\n    if (left_herd != 1 && status == 'active'){\n          farmOS_archive.push(data3);\n}\n})\n\n}) \n//end check for animals in farmOS but not ICBF\n\n//farmOS_changes.push(farmOS_archive);\n//farmOS_changes.push(farmOS_import);\n\n//msg.farmOS = farmOS_changes;\nflow.set(\"farmOS_import\",farmOS_import);\nflow.set(\"farmOS_archive\",farmOS_archive);\n\nmsg.payload = \"Animals to Import \" + farmOS_import.length + \", Animals to Archive \" + farmOS_archive.length\n\n}\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1110,
+        "y": 260,
+        "wires": [
+            [
+                "988611e4c5cc5e50",
+                "300b92ef24f03345",
+                "53fa636a7b664797"
+            ]
+        ]
+    },
+    {
+        "id": "384b52fbd1c2bd1a",
+        "type": "ui_button",
+        "z": "1715b1bd5189a439",
+        "name": "",
+        "group": "3f3ece6f7529862f",
+        "order": 1,
+        "width": "6",
+        "height": "1",
+        "passthru": false,
+        "label": "Check for Herd Changes",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "Green",
+        "className": "",
+        "icon": "",
+        "payload": "http://192.168.1.34",
+        "payloadType": "str",
+        "topic": "payload.url",
+        "topicType": "msg",
+        "x": 230,
+        "y": 160,
+        "wires": [
+            [
+                "045363eacec1a5dd"
+            ]
+        ]
+    },
+    {
+        "id": "5e947ce5c2a68ce3",
+        "type": "inject",
+        "z": "1715b1bd5189a439",
+        "name": "",
+        "props": [],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 210,
+        "y": 460,
+        "wires": [
+            [
+                "cc53f8e86d54c3c9"
+            ]
+        ]
+    },
+    {
+        "id": "1c8513278f61cf37",
+        "type": "ui_button",
+        "z": "1715b1bd5189a439",
+        "name": "",
+        "group": "3f3ece6f7529862f",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Import Animals from ICBF",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "go",
+        "topicType": "msg",
+        "x": 190,
+        "y": 520,
+        "wires": [
+            [
+                "cc53f8e86d54c3c9"
+            ]
+        ]
+    },
+    {
+        "id": "300b92ef24f03345",
+        "type": "ui_text",
+        "z": "1715b1bd5189a439",
+        "group": "3f3ece6f7529862f",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "x": 1490,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "b827deb57fed3559",
+        "type": "debug",
+        "z": "1715b1bd5189a439",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1130,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "988611e4c5cc5e50",
+        "type": "debug",
+        "z": "1715b1bd5189a439",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1150,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "cc53f8e86d54c3c9",
+        "type": "function",
+        "z": "1715b1bd5189a439",
+        "name": "Import to farmOS",
+        "func": "\n//Declare Variables\nlet outputMsgs = [];\nvar tag,gender,dob,breed;\nvar asset,UUID;\nvar terms = flow.get(\"Animal_Terms\");\nvar farmOS_import = flow.get(\"farmOS_import\");\n\nif (farmOS_import != null) {\nfarmOS_import.forEach(data => {\n\n//extract data from CSV\ntag = data.animal_id;\ngender = data.sex\ndob = data.birth_date\nbreed = data.breed[0].code;\n    if (data.breed[0].percent != 100){\n        breed = breed + \"X\"\n    }\n\n//loop to find breed UUID\nterms.forEach(data2 => {\n    if (data2.breed == breed) {\n        UUID = data2.id;\n        }   \n    })\n// End loop to find breed UUID\n\n//Start Date formatting\nfunction padZero(i) {\n    return i < 10 ? \"0\"+i : i;\n}\ndate = new Date(dob);\nconst newdob = date.getFullYear()+'-' + (padZero(date.getMonth()+1)) + '-'+padZero(date.getDate());\n\n//End Date formatting\n\n//Create Asset Object \nasset = {\n  \"data\": {\n    \"type\": \"asset--animal\",\n    \"attributes\": {\n      \"name\": tag.slice(-3), //name is last 3 digits of tag number \n      \"id_tag\": [ \n\t\t{\n\t\t\"id\": tag,\n\t\t\"type\": \"ear_tag\",\n\t\t\"location\": \"\"\n\t\t}\n\t],\n        \"birthdate\": newdob + \"T00:00:00+00:00\", //Formatted Date @ midnight\n        \"sex\": gender.charAt(0), //reduce Male/Female to M/F\n        \n        \n    },\n   \"relationships\": {\n\t\t\"animal_type\": {\n\t\t\t\"data\": {\n\t\t\t    \"type\": \"taxonomy_term--animal_type\",\n\t\t\t\t\"id\": UUID,\n}\n  }\n}\n}\n      \n}\noutputMsgs.push({payload:asset}); //push Assets to next node one at a time\n    }) \n\n}\n\nreturn [ outputMsgs ];\n\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 450,
+        "y": 520,
+        "wires": [
+            [
+                "24de83e9fdc91240"
+            ]
+        ]
+    },
+    {
+        "id": "a2c8055fb4afcf1f",
+        "type": "switch",
+        "z": "1715b1bd5189a439",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "cont",
+                "v": "Access Granted",
+                "vt": "str"
+            },
+            {
+                "t": "else"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 870,
+        "y": 100,
+        "wires": [
+            [
+                "0bcd783b8e13111f"
+            ],
+            [
+                "b827deb57fed3559",
+                "300b92ef24f03345"
+            ]
+        ]
+    },
+    {
+        "id": "8d4f1ce26da60928",
+        "type": "switch",
+        "z": "1715b1bd5189a439",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "cont",
+                "v": "ICBF Access Granted",
+                "vt": "str"
+            },
+            {
+                "t": "else"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 870,
+        "y": 180,
+        "wires": [
+            [
+                "44931b74312ac4a0"
+            ],
+            [
+                "300b92ef24f03345",
+                "b827deb57fed3559"
+            ]
+        ]
+    },
+    {
+        "id": "045363eacec1a5dd",
+        "type": "change",
+        "z": "1715b1bd5189a439",
+        "name": "",
+        "rules": [
+            {
+                "t": "delete",
+                "p": "payload",
+                "pt": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 230,
+        "y": 100,
+        "wires": [
+            [
+                "5a0c251368582f28"
+            ]
+        ]
+    },
+    {
+        "id": "c565ba8101eba406",
+        "type": "sf:949541c9b70110d5",
+        "z": "1715b1bd5189a439",
+        "name": "GET Animal Terms",
+        "API": "taxonomy_term/animal_type",
+        "Method": "GET",
+        "x": 430,
+        "y": 340,
+        "wires": [
+            [
+                "2f6c93e5e29a679a"
+            ]
+        ]
+    },
+    {
+        "id": "2f6c93e5e29a679a",
+        "type": "function",
+        "z": "1715b1bd5189a439",
+        "name": "Get Animal Terms",
+        "func": "var array = flow.get('Animal_Terms') || [];\nvar breed;\nvar id;\n\nmsg.payload.data.forEach(data => {\nbreed = data.attributes.name;\nid = data.id;\narray.push({id:id,breed:breed});\n})\n\nflow.set(\"Animal_Terms\", array);\n\nreturn msg;\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 650,
+        "y": 340,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "53fa636a7b664797",
+        "type": "change",
+        "z": "1715b1bd5189a439",
+        "name": "Clear array",
+        "rules": [
+            {
+                "t": "delete",
+                "p": "Animal_Terms",
+                "pt": "flow"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 230,
+        "y": 340,
+        "wires": [
+            [
+                "c565ba8101eba406"
+            ]
+        ]
+    },
+    {
+        "id": "24de83e9fdc91240",
+        "type": "sf:949541c9b70110d5",
+        "z": "1715b1bd5189a439",
+        "name": "POST to farmOS",
+        "API": "asset/animal",
+        "Method": "POST",
+        "x": 670,
+        "y": 520,
+        "wires": [
+            [
+                "8401a41e362d3464",
+                "e8664774d0202670"
+            ]
+        ]
+    },
+    {
+        "id": "e8664774d0202670",
+        "type": "debug",
+        "z": "1715b1bd5189a439",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 870,
+        "y": 460,
+        "wires": []
+    },
+    {
+        "id": "8401a41e362d3464",
+        "type": "change",
+        "z": "1715b1bd5189a439",
+        "name": "",
+        "rules": [
+            {
+                "t": "delete",
+                "p": "farmOS_import",
+                "pt": "flow"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 920,
+        "y": 520,
+        "wires": [
+            [
+                "eb8f103d6913c0a8"
+            ]
+        ]
+    },
+    {
+        "id": "f0ffc034748dbe4d",
+        "type": "inject",
+        "z": "1715b1bd5189a439",
+        "name": "",
+        "props": [],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 210,
+        "y": 680,
+        "wires": [
+            [
+                "9d25315908e62160"
+            ]
+        ]
+    },
+    {
+        "id": "15c3b53009695cbf",
+        "type": "ui_button",
+        "z": "1715b1bd5189a439",
+        "name": "",
+        "group": "3f3ece6f7529862f",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Archive animals no longer in ICBF",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "go",
+        "topicType": "msg",
+        "x": 160,
+        "y": 740,
+        "wires": [
+            [
+                "9d25315908e62160"
+            ]
+        ]
+    },
+    {
+        "id": "9d25315908e62160",
+        "type": "function",
+        "z": "1715b1bd5189a439",
+        "name": "Archive from farmOS",
+        "func": "\n//Declare Variables\nlet outputMsgs = [];\nvar asset,UUID;\nvar terms = flow.get(\"Animal_Terms\");\nvar farmOS_archive = flow.get(\"farmOS_archive\");\n\nif (farmOS_archive != null) {\nfarmOS_archive.forEach(data => {\n\nUUID = data.id;\n  \n\n//Create Asset Object \nasset = {\"data\":{\"type\":\"asset--animal\",\"id\":UUID,\"attributes\":{\"status\":\"archived\"}}}\noutputMsgs.push({payload:asset}); //push Assets to next node one at a time\n    }) \n\n}\n\nreturn [ outputMsgs ];\n\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 460,
+        "y": 740,
+        "wires": [
+            [
+                "8f389ec9296c393c"
+            ]
+        ]
+    },
+    {
+        "id": "ec0c6ccda20b7f1e",
+        "type": "debug",
+        "z": "1715b1bd5189a439",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 870,
+        "y": 680,
+        "wires": []
+    },
+    {
+        "id": "591d79069609e2e7",
+        "type": "change",
+        "z": "1715b1bd5189a439",
+        "name": "",
+        "rules": [
+            {
+                "t": "delete",
+                "p": "farmOS_archive",
+                "pt": "flow"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 940,
+        "y": 740,
+        "wires": [
+            [
+                "73eff550220c52b8"
+            ]
+        ]
+    },
+    {
+        "id": "eb8f103d6913c0a8",
+        "type": "function",
+        "z": "1715b1bd5189a439",
+        "name": "Return Message",
+        "func": "msg.payload = \"Animals Imported\"\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1160,
+        "y": 520,
+        "wires": [
+            [
+                "300b92ef24f03345"
+            ]
+        ]
+    },
+    {
+        "id": "73eff550220c52b8",
+        "type": "function",
+        "z": "1715b1bd5189a439",
+        "name": "Return Message",
+        "func": "msg.payload = \"Animals Archived\"\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1180,
+        "y": 740,
+        "wires": [
+            [
+                "300b92ef24f03345"
+            ]
+        ]
+    },
+    {
+        "id": "8f389ec9296c393c",
+        "type": "sf:949541c9b70110d5",
+        "z": "1715b1bd5189a439",
+        "name": "PATCH to farmOS",
+        "API": "asset/animal",
+        "Method": "PATCH",
+        "x": 690,
+        "y": 740,
+        "wires": [
+            [
+                "591d79069609e2e7",
+                "ec0c6ccda20b7f1e"
+            ]
+        ]
+    },
+    {
+        "id": "3f3ece6f7529862f",
+        "type": "ui_group",
+        "name": "Herd Sync",
+        "tab": "f16ccd3b19813a29",
+        "order": 2,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "f16ccd3b19813a29",
+        "type": "ui_tab",
+        "name": "farmOS",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    }
+]
